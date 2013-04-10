@@ -1,7 +1,8 @@
 window.App = Em.Application.create()
 
-wsUrl = "http://4uec.localtunnel.com"
-wsUrl = "http://localhost:5100"
+#wsUrl = "http://4uec.localtunnel.com"
+#wsUrl = "http://localhost:5200"
+wsUrl = "http://godfucker.herokuapp.com"
 
 getRootModel = (obj) ->
   while obj && obj.get && obj.get("model")
@@ -122,6 +123,15 @@ App.GameController = Em.ObjectController.extend
 
   isGameController: (-> true).property()
 
+  addCard: ->
+    game = @get("model")
+    id = game.get("id")
+    card = @get("cardToAdd")
+    sideNum = 1
+    $.getJSON("#{wsUrl}/games/#{id}/#{sideNum}/add_card/#{card}").then (resp) =>
+      getRootModel(game).setFromRaw(resp)
+      @set "cardToAdd",""
+
 App.SideController = Em.ObjectController.extend
   isCurrent: (->
     game = @get("game")
@@ -160,10 +170,18 @@ App.SideController = Em.ObjectController.extend
     _.map this.engageable_cards, (c) -> c.name).property("engageable_cards","pool.runes","pool.power")
 
   chooseOption: (choice, card) ->
+    card = {card_id: "null"} unless card
     game = @get("game")
     id = game.get("id")
     $.getJSON("#{wsUrl}/games/#{id}/choose_option/#{choice.choice_id}/#{card.card_id}").then (resp) ->
       getRootModel(game).setFromRaw(resp)
 
+  invokeAbility: (card) ->
+    game = @get("game")
+    id = game.get("id")
+    $.getJSON("#{wsUrl}/games/#{id}/invoke_ability/#{card.card_id}").then (resp) ->
+      getRootModel(game).setFromRaw(resp)
+
+  
 
 

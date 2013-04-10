@@ -17,7 +17,11 @@
 
 <script type="text/x-handlebars" data-template-name="game">
   Current Side Index: {{current_side_index}}<br>
-  Honor: {{honor}}
+  Honor: {{honor}}<br>
+  
+  {{view Em.TextField valueBinding="cardToAdd"}}
+  <a href="#" {{action addCard}}>Add Card</a><br>
+  
   
   <br>
 
@@ -58,101 +62,7 @@
 </script>
 
 
-<script type="text/x-handlebars" data-template-name="_my_side">
-  <div class="row">
-    {{partial "actions"}}
-    {{partial "pool"}}
-    {{partial "hand"}}
-    {{partial "played"}}
-    {{partial "discard"}}
-  </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="side">
-  {{partial "my_side"}}
-  <br><br>
-  {{render other_side otherSide}}
-</script>
-
-<script type="text/x-handlebars" data-template-name="other_side">
-  <div class="row">
-    {{partial "pool"}}
-    {{partial "played"}}
-    {{partial "discard"}}
-    <div class="span6"></div>
-  </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="_actions">
-  <div class="span4">
-    Side: {{sideNum}}<br>
-    {{#if isCurrent}}
-      <a href="#" {{action "endTurn"}}>End Turn</a><br>
-    {{/if}}
-    {{#if hasChoice}}
-      <h3>Choice</h3>
-      {{#each choice in choices}}
-        {{choice.name}}<br>
-        {{#each card in choice.choosable_cards}}
-          <a href="#" {{action "chooseOption" choice card}}>{{card.name}}</a><br>
-        {{/each}}
-      {{/each}}
-    {{/if}}
-
-  </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="_pool">
-  <div class="span2">
-    <h3>Pool</h3>
-    Runes: {{played.pool.runes}}<br>
-    Power: {{played.pool.power}}<br>
-    Honor: {{honor}}
-    <h3>Constructs</h3>
-    {{#each card in constructs.cards}}
-      {{card.name}}<br>
-    {{/each}}
-  </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="_hand">
-  <div class="span2">
-    <h3>Hand</h3>
-    {{#each card in hand.cards}}
-      {{#if isCurrent}}
-        <a href="#" {{action "playCard" card}}>{{card.name}}</a>
-      {{else}}
-        {{card.name}}
-      {{/if}}
-      <br>
-    {{/each}}
-
-    {{#if showPlayAll}}
-      <br>
-      <a href="#" {{action "playAll"}}>Play All</a>
-    {{/if}}
-  </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="_played">
-  <div class="span2">
-    <h3>Played</h3>
-    {{#each card in played.cards}}
-      {{card.name}}
-      <br>
-    {{/each}}
-  </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="_discard">
-  <div class="span2">
-    <h3>Discard</h3>
-    {{#each card in discard.cards}}
-      {{card.name}}
-      <br>
-    {{/each}}
-  </div>
-</script>
+<%= partial "play_area" %>
 
 Stuff!
 <br>
