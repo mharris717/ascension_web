@@ -4,8 +4,9 @@
     {{partial "pool"}}
     {{partial "hand"}}
     {{partial "played"}}
-    {{partial "discard"}}
+    {{render discard discard}}
   </div>
+  {{partial "hand_pretty"}}
 </script>
 
 <script type="text/x-handlebars" data-template-name="side">
@@ -14,13 +15,28 @@
   {{render other_side otherSide}}
 </script>
 
+<script type="text/x-handlebars" data-template-name="_history">
+  <div class="span6">
+    <h3>Last Turn</h3>
+    <h4>Played</h4>
+    {{#each card in last_turn.played_cards}}
+      {{card.name}}<br>
+    {{/each}}
+    <h4>Engaged</h4>
+    {{#each card in last_turn.engaged_cards}}
+      {{card.name}}<br>
+    {{/each}}
+  </div>
+</script>
+
 <script type="text/x-handlebars" data-template-name="other_side">
   <div class="row">
     {{partial "pool"}}
     {{partial "played"}}
-    {{partial "discard"}}
-    <div class="span6"></div>
+    {{render discard discard}}
+    {{partial "history"}}
   </div>
+
 </script>
 
 <script type="text/x-handlebars" data-template-name="_actions">
@@ -47,14 +63,32 @@
 <script type="text/x-handlebars" data-template-name="_pool">
   <div class="span2">
     <h3>Pool</h3>
-    Runes: {{played.pool.runes}}<br>
-    Power: {{played.pool.power}}<br>
-    Honor: {{honor}}<br>
-    Deck Size: {{deck.cards.length}}
+
+    <table class="pool">
+      <tr>
+        <th>Runes</th>
+        <th>Power</th>
+        <th>Honor</th>
+        <th>Deck Honor</th>
+        <th>D/H Size</th>
+      </tr>
+      <tr>
+        <td>{{played.pool.runes}}</td>
+        <td>{{played.pool.power}}</td>
+        <td>{{honor}}</td>
+        <td>{{deck_honor}}</td>
+        <td>{{deck.cards.length}}/{{hand.cards.length}}</td>
+      </tr>
+    </table>
+
     <h3>Constructs</h3>
     {{#each card in constructs.cards}}
-      {{#if card.has_invokable_ability}}
-        <a href="#" {{action "invokeAbility" card}}>{{card.name}}</a>
+      {{#if isCurrent}}
+        {{#if card.has_invokable_ability}}
+          <a href="#" {{action "invokeAbility" card}}>{{card.name}}</a>
+        {{else}}
+          {{card.name}}
+        {{/if}}
       {{else}}
         {{card.name}}
       {{/if}}
@@ -82,6 +116,17 @@
   </div>
 </script>
 
+<script type="text/x-handlebars" data-template-name="_hand_pretty">
+  {{#each card in hand.cards}}
+    {{#if isCurrent}}
+      <a href="#" {{action "playCard" card}}>{{displayCard card}}</a>
+    {{else}}
+      {{displayCard card}}
+    {{/if}}
+  {{/each}}
+  <br>
+</script>
+
 <script type="text/x-handlebars" data-template-name="_played">
   <div class="span2">
     <h3>Played</h3>
@@ -92,13 +137,17 @@
   </div>
 </script>
 
-<script type="text/x-handlebars" data-template-name="_discard">
+<script type="text/x-handlebars" data-template-name="discard">
   <div class="span2">
-    <h3>Discard</h3>
-    {{#each card in discard.cards}}
-      {{card.name}}
-      <br>
-    {{/each}}
+    <a href="#" {{action toggleDiscard}}>
+      <h3>Discard</h3>
+    </a>
+    {{#if displayDiscard}}
+      {{#each card in cards}}
+        {{card.name}}
+        <br>
+      {{/each}}
+    {{/if}}
   </div>
 </script>
 

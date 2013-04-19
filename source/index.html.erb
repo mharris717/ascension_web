@@ -18,6 +18,7 @@
 <script type="text/x-handlebars" data-template-name="game">
   Current Side Index: {{current_side_index}}<br>
   Honor: {{honor}}<br>
+  Should Reload: {{view Em.Checkbox checkedBinding="App.shouldReload"}}<br>
   
   {{view Em.TextField valueBinding="cardToAdd"}}
   <a href="#" {{action addCard}}>Add Card</a><br>
@@ -32,32 +33,31 @@
   {{outlet}}
 </script>
 
-<script type="text/x-handlebars" data-template-name="_center">
-  Center: <br>
-
-  <div class="row">
-    {{#each card in constantCards}}
-      <div class="span2">
-        {{#if card.engageable}}
-          <a href="#" {{action "acquireCard" card}}>{{card.name}}</a>
-        {{else}}
-          {{card.name}}
-        {{/if}}
-      </div>
-    {{/each}}
-    <div class="span6"></div>
+<script type="text/x-handlebars" data-template-name="card">
+  <div {{bindAttr class=":span2 :center-card engageable"}}>
+    {{#if card.engageable}}
+      <a href="#" {{action "acquireCard" card}}>{{displayCard card}}</a>
+    {{else}}
+      {{displayCard card}}
+    {{/if}}
   </div>
+</script>
 
-  <div class="row">
-    {{#each card in centerCards}}
-      <div class="span2">
-        {{#if card.engageable}}
-          <a href="#" {{action "acquireCard" card}}>{{card.name}}</a>
-        {{else}}
-          {{card.name}}
-        {{/if}}
-      </div>
-    {{/each}}
+<script type="text/x-handlebars" data-template-name="_center">
+  <div id="center">
+
+    <div class="row">
+      {{#each card in constantCards}}
+        {{render card card}}
+      {{/each}}
+      <div class="span6"></div>
+    </div>
+
+    <div class="row">
+      {{#each card in centerCards}}
+        {{render card card}}
+      {{/each}}
+    </div>
   </div>
 </script>
 

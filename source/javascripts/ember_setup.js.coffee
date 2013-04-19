@@ -1,8 +1,16 @@
-window.App = Em.Application.create()
+Pusher.log = (message) ->
+  if window.console && window.console.log 
+    window.console.log(message)
+
+window.App = Em.Application.create(shouldReload: true)
+
+setupPusher = ->
+  App.set "pusher",new Pusher('28c727618e7719053306')
+setupPusher()
 
 #wsUrl = "http://4uec.localtunnel.com"
-#wsUrl = "http://localhost:5200"
-wsUrl = "http://godfucker.herokuapp.com"
+wsUrl = "http://localhost:5100"
+#wsUrl = "http://godfucker.herokuapp.com"
 
 getRootModel = (obj) ->
   while obj && obj.get && obj.get("model")
@@ -14,6 +22,10 @@ App.Router.map ->
   @resource "games", ->
     @resource "game", {path: ":game_id"}, ->
       @resource "side", {path: ":side_id"}
+
+App.IndexRodute = Em.Route.extend
+  redirect: ->
+    @transitionTo 'games'
 
 App.Game = Em.Object.extend
   setFromRaw: (resp) ->
@@ -68,12 +80,16 @@ App.SideRoute = Em.Route.extend
     game = @controllerFor("game")
     res = App.DynamicSide.create(rawSideNum: sideNum, gameController: game)
 
+    if false
+      setTimeout ->
+        setInterval ->
+          getRootModel(game).reload() if App.get('shouldReload')
+        ,2000
+      ,1500
+
     setTimeout ->
-      setInterval ->
-        #console.debug g
-        getRootModel(game).reload()
-      ,2000
-    ,1500
+      res.setupForPusher()
+    ,1000
 
     res
 
@@ -92,6 +108,12 @@ App.DynamicSide = Em.ObjectController.extend
     return undefined unless game
     sides = game.get("sides")
     sides[@get("sideNum")-1]).property("game","sideNum","game.sides.@each")
+
+  setupForPusher: ->
+    game = @get("game")
+    channel = App.get('pusher').subscribe(game.get("id"))
+    channel.bind "reload", (data) =>
+      getRootModel(game).reload() unless data.sideNum == @get('sideNum')
 
 App.GamesController = Em.ArrayController.extend
   resetGame: ->
@@ -182,6 +204,17 @@ App.SideController = Em.ObjectController.extend
     $.getJSON("#{wsUrl}/games/#{id}/invoke_ability/#{card.card_id}").then (resp) ->
       getRootModel(game).setFromRaw(resp)
 
-  
+App.CardController = Em.ObjectController.extend
+  engageableClass: (-> "thing").property("engageable")
 
+App.DiscardController = Em.ObjectController.extend
+  displayDiscard: false
+  toggleDiscard: ->
+    val = !@get('displayDiscard')
+    @set "displayDiscard",val
 
+Ember.Handlebars.registerBoundHelper "displayCard", (card,options) ->
+  if card.image_url != 'none'
+    new Handlebars.SafeString("<img src=\"#{card.image_url}\" height=168px width=121></img>")
+  else
+    new Handlebars.SafeString(card.name)
