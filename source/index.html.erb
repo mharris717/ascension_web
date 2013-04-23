@@ -1,5 +1,4 @@
 <script type="text/x-handlebars" data-template-name="application">
-  <h1>Ascension</h1>
   {{outlet}}
 </script>
 
@@ -16,41 +15,44 @@
 </script>
 
 <script type="text/x-handlebars" data-template-name="game">
-  Current Side Index: {{current_side_index}}<br>
-  Honor: {{honor}}<br>
-  Should Reload: {{view Em.Checkbox checkedBinding="App.shouldReload"}}<br>
-  
-  {{view Em.TextField valueBinding="cardToAdd"}}
-  <a href="#" {{action addCard}}>Add Card</a><br>
-  
-  
-  <br>
+  <div class="game">
+    {{outlet otherSide}}
+    <hr>
 
-  {{partial "center"}}
+    {{partial "center"}}
+    <hr>
 
-  <br><br>
-  
-  {{outlet}}
+    {{outlet mySide}}
+  </div>
 </script>
 
 <script type="text/x-handlebars" data-template-name="card">
-  <div {{bindAttr class=":span2 :center-card engageable"}}>
-    {{#if card.engageable}}
-      <a href="#" {{action "acquireCard" card}}>{{displayCard card}}</a>
-    {{else}}
-      {{displayCard card}}
-    {{/if}}
+  <div {{bindAttr class=":span2"}}>
+    <div {{bindAttr class="engageable :center-card"}}>
+      {{#if card.engageable}}
+        {{#if isCurrent}}
+          <a href="#" {{action "acquireCard" card}}>{{displayCard card}}</a>
+        {{else}}
+          {{displayCard card}}
+        {{/if}}
+      {{else}}
+        {{displayCard card}}
+      {{/if}}
+    </div>
   </div>
 </script>
 
 <script type="text/x-handlebars" data-template-name="_center">
   <div id="center">
-
     <div class="row">
       {{#each card in constantCards}}
         {{render card card}}
       {{/each}}
-      <div class="span6"></div>
+      <div class="span6">
+        <b>Honor</b>: {{honor}}<br>
+        {{view Em.TextField valueBinding="cardToAdd"}}
+        <a href="#" {{action addCard}}>Add Card</a><br>
+      </div>
     </div>
 
     <div class="row">
@@ -63,6 +65,3 @@
 
 
 <%= partial "play_area" %>
-
-Stuff!
-<br>

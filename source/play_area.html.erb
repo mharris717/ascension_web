@@ -1,12 +1,35 @@
-<script type="text/x-handlebars" data-template-name="_my_side">
-  <div class="row">
-    {{partial "actions"}}
-    {{partial "pool"}}
-    {{partial "hand"}}
-    {{partial "played"}}
-    {{render discard discard}}
+<script type="text/x-handlebars" data-template-name="mySide">
+  <div class="row my-side">
+    <div class="span3">
+      {{partial "actions"}}
+      {{render constructs constructs}}
+      {{render discard discard}}
+    </div>
+
+    <div class="span9">
+      {{partial "played"}}
+      {{partial "hand"}}
+    </div>
   </div>
-  {{partial "hand_pretty"}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="otherSide">
+  <div class="row other-side">
+    <div class="span3">
+      {{partial "pool"}}
+      {{render constructs constructs}}
+      {{render discard discard}}
+
+    </div>
+    <div class="span9">
+      {{#if isCurrent}}
+        {{partial "played"}}
+      {{else}}
+        {{partial "history"}}
+      {{/if}}
+    </div>
+  </div>
+
 </script>
 
 <script type="text/x-handlebars" data-template-name="side">
@@ -16,12 +39,16 @@
 </script>
 
 <script type="text/x-handlebars" data-template-name="_history">
-  <div class="span6">
+  <div class="span2">
     <h3>Last Turn</h3>
+  </div>
+  <div class="span2">
     <h4>Played</h4>
     {{#each card in last_turn.played_cards}}
       {{card.name}}<br>
     {{/each}}
+  </div>
+  <div class="span2">
     <h4>Engaged</h4>
     {{#each card in last_turn.engaged_cards}}
       {{card.name}}<br>
@@ -29,22 +56,24 @@
   </div>
 </script>
 
-<script type="text/x-handlebars" data-template-name="other_side">
-  <div class="row">
-    {{partial "pool"}}
-    {{partial "played"}}
-    {{render discard discard}}
-    {{partial "history"}}
-  </div>
 
-</script>
 
 <script type="text/x-handlebars" data-template-name="_actions">
-  <div class="span4">
-    Side: {{sideNum}}<br>
-    {{#if isCurrent}}
-      <a href="#" {{action "endTurn"}}>End Turn</a><br>
-    {{/if}}
+  <div>
+    {{partial "pool"}}
+    <br>
+
+    <div class="action-links">
+      {{#if isCurrent}}
+        {{#if showPlayAll}}
+          <a href="#" {{action playAll}}>Play All</a><br>
+        {{/if}}
+        <a href="#" {{action "endTurn"}}>End Turn</a><br>
+      {{/if}}
+    </div>
+
+
+
     {{#if hasChoice}}
       <h3>Choice</h3>
       {{#each choice in choices}}
@@ -61,88 +90,83 @@
 </script>
 
 <script type="text/x-handlebars" data-template-name="_pool">
-  <div class="span2">
-    <h3>Pool</h3>
+  <table class="pool">
+    <tr>
+      <th>Runes</th>
+      <td>{{played.pool.runes}}</td>
+    </tr>
+    <tr>
+      <th>Power</th>
+      <td>{{played.pool.power}}</td>
+    </tr>
+    <tr>
+      <th>Honor</th>
+      <td>{{honor}}</td>
+    </tr>
+    <tr>
+      <th>Deck Honor</th>
+      <td>{{deck_honor}}</td>
+    </tr>
+    <tr>
+      <th>Deck Size</th>
+      <td>{{deck.cards.length}}</td>
+    </tr>
+    <tr>
+      <th>Hand Size</th>
+      <td>{{hand.cards.length}}</td>
+    </tr>
+  </table>
+</script>
 
-    <table class="pool">
-      <tr>
-        <th>Runes</th>
-        <th>Power</th>
-        <th>Honor</th>
-        <th>Deck Honor</th>
-        <th>D/H Size</th>
-      </tr>
-      <tr>
-        <td>{{played.pool.runes}}</td>
-        <td>{{played.pool.power}}</td>
-        <td>{{honor}}</td>
-        <td>{{deck_honor}}</td>
-        <td>{{deck.cards.length}}/{{hand.cards.length}}</td>
-      </tr>
-    </table>
-
-    <h3>Constructs</h3>
-    {{#each card in constructs.cards}}
-      {{#if isCurrent}}
-        {{#if card.has_invokable_ability}}
-          <a href="#" {{action "invokeAbility" card}}>{{card.name}}</a>
+<script type="text/x-handlebars" data-template-name="constructs">
+  <div>
+    <a href="#" {{action toggleDisplay}}>
+      <h4>Constructs ({{cards.length}})</h4>
+    </a>
+    {{#if shouldDisplay}}
+      {{#each card in cards}}
+        {{#if isCurrent}}
+          {{#if card.has_invokable_ability}}
+            <a href="#" {{action "invokeAbility" card}}>{{card.name}}</a>
+          {{else}}
+            {{card.name}}
+          {{/if}}
         {{else}}
           {{card.name}}
         {{/if}}
-      {{else}}
-        {{card.name}}
-      {{/if}}
-      <br>
-    {{/each}}
+        <br>
+      {{/each}}
+    {{/if}}
   </div>
 </script>
+
 
 <script type="text/x-handlebars" data-template-name="_hand">
-  <div class="span2">
-    <h3>Hand</h3>
+  <div class="hand">
     {{#each card in hand.cards}}
       {{#if isCurrent}}
-        <a href="#" {{action "playCard" card}}>{{card.name}}</a>
+        <a href="#" {{action "playCard" card}}>{{displayCard card}}</a>
       {{else}}
-        {{card.name}}
+        {{displayCard card}}
       {{/if}}
-      <br>
     {{/each}}
-
-    {{#if showPlayAll}}
-      <br>
-      <a href="#" {{action "playAll"}}>Play All</a>
-    {{/if}}
   </div>
-</script>
-
-<script type="text/x-handlebars" data-template-name="_hand_pretty">
-  {{#each card in hand.cards}}
-    {{#if isCurrent}}
-      <a href="#" {{action "playCard" card}}>{{displayCard card}}</a>
-    {{else}}
-      {{displayCard card}}
-    {{/if}}
-  {{/each}}
-  <br>
 </script>
 
 <script type="text/x-handlebars" data-template-name="_played">
-  <div class="span2">
-    <h3>Played</h3>
+  <div class="played">
     {{#each card in played.cards}}
-      {{card.name}}
-      <br>
+      {{displayCard card}}
     {{/each}}
   </div>
 </script>
 
 <script type="text/x-handlebars" data-template-name="discard">
-  <div class="span2">
-    <a href="#" {{action toggleDiscard}}>
-      <h3>Discard</h3>
+  <div>
+    <a href="#" {{action toggleDisplay}}>
+      <h4>Discard ({{cards.length}})</h4>
     </a>
-    {{#if displayDiscard}}
+    {{#if shouldDisplay}}
       {{#each card in cards}}
         {{card.name}}
         <br>

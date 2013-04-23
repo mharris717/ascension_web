@@ -1,4 +1,4 @@
-Pusher.log = (message) ->
+Pusher.logxx = (message) ->
   if window.console && window.console.log 
     window.console.log(message)
 
@@ -20,8 +20,9 @@ getRootModel = (obj) ->
 
 App.Router.map ->
   @resource "games", ->
-    @resource "game", {path: ":game_id"}, ->
-      @resource "side", {path: ":side_id"}
+    @resource "foo"
+  @resource "game", {path: "game/:game_id"}, ->
+    @resource "side", {path: ":side_id"}
 
 App.IndexRodute = Em.Route.extend
   redirect: ->
@@ -33,11 +34,13 @@ App.Game = Em.Object.extend
     App.Game.fixRawId(resp)
     for k,v of resp
       @set k,v
+    console.debug "setFromRaw finished"
 
   reload: ->
     console.debug "Reloading"
     App.Game.findOne(@get("id"),true).then (resp) =>
       @setFromRaw(resp)
+      console.debug "game#reload finished"
 
 
 App.Game.reopenClass
@@ -93,6 +96,18 @@ App.SideRoute = Em.Route.extend
 
     res
 
+  setupController: (controller, model) ->
+    @controllerFor('otherSide').set "content", model.get('otherSide')
+    @controllerFor("center").set "isCurrent", true
+
+  renderTemplate: ->
+    @render 'mySide', {outlet: "mySide", controller: @get("controller")}
+    #other_side = @get("controller").get('otherSide')
+    #other_controller = App.SideController.create(content: other_side)
+    c = @controllerFor("otherSide")
+    console.debug c
+    @render 'otherSide', {outlet: "otherSide", controller: c}
+
 
 App.DynamicSide = Em.ObjectController.extend
   game: (-> @get("gameController.model")).property("gameController.model")
@@ -109,11 +124,21 @@ App.DynamicSide = Em.ObjectController.extend
     sides = game.get("sides")
     sides[@get("sideNum")-1]).property("game","sideNum","game.sides.@each")
 
+  otherSide: (->
+    other = 3 - @get("sideNum")
+    App.DynamicSide.create(rawSideNum: other, gameController: @get("gameController"))).property("content","game.sides.@each","sideNum","gameController","game.sides.@each.pool.runes","game.last_update_dt")
+
+
   setupForPusher: ->
     game = @get("game")
     channel = App.get('pusher').subscribe(game.get("id"))
     channel.bind "reload", (data) =>
-      getRootModel(game).reload() unless data.sideNum == @get('sideNum')
+      console.debug "got reload signal"
+      if data.sideNum == @get('sideNum')
+        console.debug "ignoring reload signal"
+      else
+        console.debug "triggering reload"
+        getRootModel(game).reload()
 
 App.GamesController = Em.ArrayController.extend
   resetGame: ->
@@ -122,6 +147,13 @@ App.GamesController = Em.ArrayController.extend
   showGames: (-> true).property()
 
 App.GameController = Em.ObjectController.extend
+  needs: "side"
+
+  isCurrent: (->
+    a = @get("controllers.side.sideNum")
+    b = @get("turn_manager.current_side_index")+1
+    a == b).property("controllers.side.sideNum","turn_manager.current_side_index")
+
   centerCards: (->
     engageableNames = _.pluck @get("engageable_cards"),"name"
     _.map @get("center.cards"), (card) ->
@@ -137,6 +169,8 @@ App.GameController = Em.ObjectController.extend
   acquireCard: (card) ->
     game = @get("model")
     id = game.get("id")
+
+    #App.removeCard this, "centerCards", card,true
     $.getJSON("#{wsUrl}/games/#{id}/acquire_card/#{card.name}").then (resp) ->
       getRootModel(game).setFromRaw(resp)
 
@@ -154,6 +188,16 @@ App.GameController = Em.ObjectController.extend
       getRootModel(game).setFromRaw(resp)
       @set "cardToAdd",""
 
+App.removeCard = (obj,cardsName,card,rep) ->
+  hand = obj.get(cardsName)
+  if rep
+    a = _.map hand, (c) ->
+      if c == card then {name: null, image_url: null} else c
+  else
+    a = _.filter hand, (c) -> c != card
+  obj.set cardsName,a
+
+
 App.SideController = Em.ObjectController.extend
   isCurrent: (->
     game = @get("game")
@@ -164,14 +208,17 @@ App.SideController = Em.ObjectController.extend
   hasChoice: (->
     @get("choices") && @get("choices").length > 0 && @get("isCurrent")).property("choices.@each","isCurrent")
 
-  otherSide: (->
-    other = 3 - @get("sideNum")
-    App.DynamicSide.create(rawSideNum: other, gameController: @get("gameController"))).property("model","game.sides.@each","sideNum","gameController","game.sides.@each.pool.runes","game.last_update_dt")
 
   playCard: (card) ->
     console.debug "playing #{card.name}"
     game = @get("game")
     id = game.get("id")
+
+    App.removeCard this,"hand.cards",card
+
+    played = @get('played')
+    played.cards.pushObject(card)
+
     $.getJSON("#{wsUrl}/games/#{id}/play_card/#{card.name}").then (resp) ->
       getRootModel(game).setFromRaw(resp)
 
@@ -204,14 +251,29 @@ App.SideController = Em.ObjectController.extend
     $.getJSON("#{wsUrl}/games/#{id}/invoke_ability/#{card.card_id}").then (resp) ->
       getRootModel(game).setFromRaw(resp)
 
+App.OtherSideController = App.SideController.extend()
+
 App.CardController = Em.ObjectController.extend
+  needs: "game"
   engageableClass: (-> "thing").property("engageable")
 
+  isCurrent: (->
+    @get('controllers.game.isCurrent')).property('controllers.game.isCurrent')
+
 App.DiscardController = Em.ObjectController.extend
-  displayDiscard: false
-  toggleDiscard: ->
-    val = !@get('displayDiscard')
-    @set "displayDiscard",val
+  shouldDisplay: false
+  toggleDisplay: ->
+    val = !@get('shouldDisplay')
+    @set "shouldDisplay",val
+
+App.ConstructsController = Em.ObjectController.extend
+  shouldDisplay: false
+  toggleDisplay: ->
+    val = !@get('shouldDisplay')
+    @set "shouldDisplay",val
+
+App.CenterController = Em.ObjectController.extend
+  isCurrent: true
 
 Ember.Handlebars.registerBoundHelper "displayCard", (card,options) ->
   if card.image_url != 'none'
