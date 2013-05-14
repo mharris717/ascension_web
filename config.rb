@@ -56,6 +56,8 @@ load "coffee_pre.rb"
 #   end
 # end
 
+page "/testing.html", :layout => "testing"
+
 set :css_dir, 'stylesheets'
 
 set :js_dir, 'javascripts'

@@ -4,4 +4,4 @@
 //= require vendor/underscore
 //= require vendor/bootstrap
 //= require game_dump
-//= require_tree .
+//= require ember_setup

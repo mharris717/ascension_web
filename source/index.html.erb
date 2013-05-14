@@ -1,14 +1,18 @@
 <script type="text/x-handlebars" data-template-name="application">
+  <div id="app-div">abc</div>
   {{outlet}}
 </script>
 
 <script type="text/x-handlebars" data-template-name="games">
   <a href="#" {{action "resetGame"}}>Reset</a><br>
   {{#if showGames}}
-  {{#each game in this}}
-    {{#linkTo "game" game }}Game {{game.id}}{{/linkTo}}
-    <br>
-  {{/each}}
+    <div id="games">
+      {{#each game in this}}
+        <div class="game">
+          {{#linkTo "game" game }}Game {{game.id}}{{/linkTo}}
+        </div>
+      {{/each}}
+    </div>
   {{/if}}
   <br>
   {{outlet}}
@@ -16,21 +20,27 @@
 
 <script type="text/x-handlebars" data-template-name="game">
   <div class="game">
-    {{outlet otherSide}}
-    <hr>
 
-    {{partial "center"}}
-    <hr>
+    
+      Other Side
+      {{outlet otherSide}}
+      <hr>
 
-    {{outlet mySide}}
+      {{partial "center"}}
+      <hr>
+
+      My Side
+      {{outlet mySide}}
+
+
   </div>
 </script>
 
 <script type="text/x-handlebars" data-template-name="card">
   <div {{bindAttr class=":span2"}}>
     <div {{bindAttr class="engageable :center-card"}}>
-      {{#if card.engageable}}
-        {{#if isCurrent}}
+      {{#if isCurrent}}
+        {{#if card.engageable}}
           <a href="#" {{action "acquireCard" card}}>{{displayCard card}}</a>
         {{else}}
           {{displayCard card}}
@@ -55,7 +65,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row" id="center-row">
       {{#each card in centerCards}}
         {{render card card}}
       {{/each}}
