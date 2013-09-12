@@ -17,7 +17,7 @@
       return App.set("pusher", new Pusher('28c727618e7719053306'));
     };
     setupPusher();
-    wsUrl = "http://localhost:5150/ascension_ws";
+    wsUrl = "http://mharrisdev.com/ascension_ws";
     getRootModel = function(obj) {
       while (obj && obj.get && obj.get("model")) {
         obj = obj.get("model");

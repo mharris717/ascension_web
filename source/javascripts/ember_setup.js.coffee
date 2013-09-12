@@ -14,8 +14,9 @@ window.setupApp = ->
   setupPusher()
 
   #wsUrl = "http://4uec.localtunnel.com"
-  wsUrl = "http://localhost:5150/ascension_ws"
+  #wsUrl = "http://localhost:5150/ascension_ws"
   #wsUrl = "http://godfucker.herokuapp.com"
+  wsUrl = "http://mharrisdev.com/ascension_ws"
 
   getRootModel = (obj) ->
     while obj && obj.get && obj.get("model")
