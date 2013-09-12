@@ -1,0 +1,78 @@
+.center-card {
+  border-style: solid;
+  border-color: White;
+  border-width: 7px;
+  margin: 0px;
+  width: 121px;
+}
+
+.engageable {
+  border-style: solid;
+  border-color: #659669;
+  border-width: 7px;
+  margin: 0px;
+}
+
+.hand-card {
+  border-style: solid;
+  border-color: White;
+  border-width: 7px;
+  margin: 0px;
+  width: 121px;
+}
+
+.choosable {
+  border-style: solid;
+  border-color: Red;
+  border-width: 7px;
+  margin: 0px;
+}
+
+#center {
+  margin-left: 40px;
+}
+
+table.pool {
+  text-align: right;
+}
+
+table.pool td {
+  margin-left: 10px;
+  padding-left: 10px;
+}
+
+.hand {
+  height: 180px;
+  min-height: 180px;
+}
+
+.played {
+  height: 180px;
+  min-height: 180px;
+}
+
+.action-links {
+  margin-left: 20px;
+}
+
+.other-side {
+  margin-left: 10px;
+}
+
+.my-side {
+  margin-left: 10px;
+
+  border-style: solid;
+  border-color: Gray;
+  border-width: 0px;
+}
+
+hr {
+  color: #D9C1CA;
+  background-color: #D9C1CA;
+  height: 2px;
+}
+
+.game {
+  margin-top: 10px;
+}

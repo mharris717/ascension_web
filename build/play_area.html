@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <!-- Always force latest IE rendering engine or request Chrome Frame -->
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    
+    <!-- Use title if it's in the page YAML frontmatter -->
+    <title>Godfucker!</title>
+    
+    <script src="http://js.pusher.com/2.0/pusher.min.js"></script>
+    <link href="/stylesheets/normalize.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="/stylesheets/all.css" media="screen" rel="stylesheet" type="text/css" />
+    <script src="/javascripts/all.js" type="text/javascript"></script>
+  </head>
+  
+  <body class="play_area">
+    <script type="text/x-handlebars" data-template-name="mySide">
+  <div class="row my-side">
+    <div class="span3">
+      {{partial "actions"}}
+      {{render constructs constructs}}
+      {{render discard discard}}
+      {{render trophies trophies}}
+    </div>
+
+    <div class="span9">
+      {{partial "played"}}
+      <hr><br>
+      {{partial "hand"}}
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="otherSide">
+  <div class="row other-side">
+    <div class="span3">
+      {{partial "pool"}}
+      {{render constructs constructs}}
+      {{render discard discard}}
+
+    </div>
+    <div class="span9">
+      {{#if isCurrent}}
+        {{partial "played"}}
+      {{else}}
+        {{partial "history"}}
+      {{/if}}
+    </div>
+  </div>
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="side">
+  {{partial "my_side"}}
+  <br><br>
+  {{render other_side otherSide}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="_history">
+  <div class="span2">
+    <h3>Last Turn</h3>
+  </div>
+  <div class="span2">
+    <h4>Played</h4>
+    {{#each card in last_turn.played_cards}}
+      {{card.name}}<br>
+    {{/each}}
+  </div>
+  <div class="span2">
+    <h4>Engaged</h4>
+    {{#each card in last_turn.engaged_cards}}
+      {{card.name}}<br>
+    {{/each}}
+  </div>
+</script>
+
+
+
+<script type="text/x-handlebars" data-template-name="_actions">
+  <div>
+    {{partial "pool"}}
+    <br>
+
+    <div class="action-links">
+      {{#if isCurrent}}
+        {{#if showPlayAll}}
+          <a href="#" {{action playAll}}>Play All</a><br>
+        {{/if}}
+        <a href="#" {{action "endTurn"}}>End Turn</a><br>
+      {{/if}}
+    </div>
+
+
+
+    {{#if hasChoice}}
+      <h3>Choice</h3>
+      {{#each choice in choices}}
+        {{choice.name}}<br>
+        {{#if choice.optional}}
+          <a href="#" {{action "chooseOption" choice null}}>None</a><br>
+        {{/if}}
+        {{#each card in choice.choosable_cards}}
+          <a href="#" {{action "chooseOption" choice card}}>{{card.name}}</a><br>
+        {{/each}}
+      {{/each}}
+    {{/if}}
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="_pool">
+  <table class="pool">
+    <tr>
+      <th>Runes</th>
+      <td>{{played.pool.runes}}</td>
+    </tr>
+    <tr>
+      <th>Power</th>
+      <td>{{played.pool.power}}</td>
+    </tr>
+    <tr>
+      <th>Honor</th>
+      <td>{{honor}}</td>
+    </tr>
+    <tr>
+      <th>Deck Honor</th>
+      <td>{{deck_honor}}</td>
+    </tr>
+    <tr>
+      <th>Deck Size</th>
+      <td>{{deck.cards.length}}</td>
+    </tr>
+    <tr>
+      <th>Hand Size</th>
+      <td>{{hand.cards.length}}</td>
+    </tr>
+  </table>
+</script>
+
+<script type="text/x-handlebars" data-template-name="constructs">
+  <div>
+    <a href="#" {{action toggleDisplay}}>
+      <h4>Constructs ({{cards.length}})</h4>
+    </a>
+    {{#if shouldDisplay}}
+      {{#each card in cards}}
+        {{#if isCurrent}}
+          {{#if card.has_invokable_ability}}
+            <a href="#" {{action "invokeAbility" card}}>{{card.name}}</a>
+          {{else}}
+            {{card.name}}
+          {{/if}}
+        {{else}}
+          {{card.name}}
+        {{/if}}
+        <br>
+      {{/each}}
+    {{/if}}
+  </div>
+</script>
+
+
+<script type="text/x-handlebars" data-template-name="_hand">
+  <div class="hand row">
+    {{#each card in handCards}}
+      <div {{bindAttr class="card.choosable :hand-card :span2"}}>
+        {{#if isCurrent}}
+          {{#if card.choosable}}
+            <a href="#" {{action "chooseCard" card}}>{{displayCard card}}</a>
+          {{else}}
+            <a href="#" {{action "playCard" card}}>{{displayCard card}}</a>
+          {{/if}}
+        {{else}}
+          {{displayCard card}}
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="_played">
+  <div class="played row">
+    {{#each card in playedCards}}
+      <div {{bindAttr class="card.choosable :played-card :span2"}}>
+        {{#if isCurrent}}
+          {{#if card.choosable}}
+            <a href="#" {{action "chooseCard" card}}>{{displayCard card}}</a>
+          {{else}}
+            {{displayCard card}}
+          {{/if}}
+        {{else}}
+          {{displayCard card}}
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="discard">
+  <div class="discard">
+    <a class="togglex" href="#" {{action toggleDisplay}}>
+      <h4>Discard ({{cards.length}})</h4>
+    </a>
+    {{#if shouldDisplay}}
+      {{#each card in fixedCards}}
+        <div class="card">
+          {{#if card.choosable}}
+            <a href="#" {{action "chooseCard" card}}>{{card.name}}</a>
+          {{else}}
+            {{card.name}}
+          {{/if}}
+        </div>
+        <br>
+      {{/each}}
+    {{/if}}
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="trophies">
+  <div class="trophies">
+    <a class="toggle" href="#" {{action toggleDisplay}}>
+      <h4>Trophies ({{cards.length}})</h4>
+    </a>
+    {{#if shouldDisplay}}
+      {{#each card in cards}}
+        <div class="card">
+          <a href="#" {{action "playCard" card}}>{{card.name}}</a>
+        </div>
+        <br>
+      {{/each}}
+    {{/if}}
+  </div>
+</script>
+
+
+  </body>
+</html>
