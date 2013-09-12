@@ -8,6 +8,6 @@
 //= require vendor/underscore
 //= require vendor/bootstrap
 //= require game_dump
-
+//= require game_dump_mod
 
 console.debug("end of testing js include file");

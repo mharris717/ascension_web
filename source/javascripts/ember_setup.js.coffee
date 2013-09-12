@@ -6,8 +6,8 @@ window.setupApp = ->
   window.App = Em.Application.create
     shouldReload: true
     #LOG_TRANSITIONS: true
-    getJSON: ->
-      $.getJSON(arguments)
+    getJSON: (a,b,c,d,e) ->
+      $.getJSON(a,b,c,d,e)
 
   setupPusher = ->
     App.set "pusher",new Pusher('28c727618e7719053306')
@@ -39,13 +39,42 @@ window.setupApp = ->
       App.Game.fixRawId(resp)
       for k,v of resp
         @set k,v
-      console.debug "setFromRaw finished"
+      console.debug "setFromRaw initial finished"
+      @hydrateCards()
 
     reload: ->
       console.debug "Reloading"
       App.Game.findOne(@get("id"),true).then (resp) =>
+        console.debug "got resp"
         @setFromRaw(resp)
         console.debug "game#reload finished"
+
+    hydratePlace: (place,obj) ->
+      getCardsArr = (cards) ->
+        if !cards
+          []
+        else if cards.cards
+          cards.cards
+        else if cards.length
+          cards
+        else
+          []
+
+      cards = Ember.get obj,place
+      cards = getCardsArr(cards)
+      if cards
+        for card in cards
+          base = App.cards.getCard(card.name)
+          for k,v of base
+            card[k] = v unless k == 'card_id'
+
+    hydrateCards: ->
+      for place in App.get("cards.gamePlaces.content")
+        @hydratePlace place,this
+
+      for place in App.get("cards.sidePlaces.content")
+        for side in @get('sides')
+          @hydratePlace place,side
 
 
   App.Game.reopenClass
@@ -56,7 +85,9 @@ window.setupApp = ->
 
     fromRaw: (resp) ->
       @fixRawId(resp)
-      App.Game.create(resp)
+      res = App.Game.create(resp)
+      res.hydrateCards()
+      res
 
     find: ->
       console.debug "in game find"
@@ -65,7 +96,7 @@ window.setupApp = ->
         for g in resp
           res.pushObject(@fromRaw(g))
 
-    findOne: (id,raw=false) ->
+    findOneOld: (id,raw=false) ->
       console.debug "in game findOne"
       res = Em.ObjectController.create(model: null)
       $.getJSON("#{wsUrl}/games/#{id}").then (resp) => 
@@ -75,6 +106,16 @@ window.setupApp = ->
         else
           g = @fromRaw(resp)
           res.set "model",g
+
+    findOne: (id,raw=false) ->
+      $.getJSON("#{wsUrl}/games/#{id}").then (resp) => 
+        @fixRawId(resp)
+        if raw
+          resp
+        else
+          @fromRaw(resp)
+          
+
 
   App.GamesRoute = Em.Route.extend
     model: ->
@@ -124,7 +165,7 @@ window.setupApp = ->
 
   App.DynamicSide = Em.ObjectController.extend
     game: (-> 
-      console.debug "Getting game, gameController is #{!!@get('gameController')}"
+      #console.debug "Getting game, gameController is #{!!@get('gameController')}"
       @get("gameController.model")).property("gameController.model")
     sideNum: (->
       raw = @get("rawSideNum")
@@ -137,10 +178,11 @@ window.setupApp = ->
       game = @get("game")
       return undefined unless game
       sides = game.get("sides")
+      #debugger
       sides[@get("sideNum")-1]).property("game","sideNum","game.sides.@each")
 
     otherSide: (->
-      console.debug "otherSide call"
+      #console.debug "otherSide call"
       other = 3 - @get("sideNum")
       res = if @get('gameController')
         App.DynamicSide.create(rawSideNum: other, gameController: @get("gameController"))
@@ -178,9 +220,12 @@ window.setupApp = ->
 
     centerCards: (->
       engageableNames = _.pluck @get("engageable_cards"),"name"
+      choosableCardHash = @get("controllers.side.choosableCardHash")
+
       _.map @get("center.cards"), (card) ->
         card.engageable = _.include engageableNames, card.name
-        card).property("engageable_cards.@each","center.cards")
+        Ember.set card, "choosable", !!choosableCardHash[card.card_id]
+        card).property("engageable_cards.@each","center.cards","controllers.side.choosableCardHash")
 
     constantCards: (->
       engageableNames = _.pluck @get("engageable_cards"),"name"
@@ -195,6 +240,10 @@ window.setupApp = ->
       #App.removeCard this, "centerCards", card,true
       App.getJSON("#{wsUrl}/games/#{id}/acquire_card/#{card.name}").then (resp) ->
         getRootModel(game).setFromRaw(resp)
+
+    chooseCard: (card) ->
+      side = @get("controllers.side")
+      side.chooseCard card
 
     setFromRaw: (raw) ->
       triedToSetFromRawOnController()
@@ -253,8 +302,11 @@ window.setupApp = ->
       played = @get('played')
       played.cards.pushObject(card)
 
-      $.getJSON("#{wsUrl}/games/#{id}/play_card/#{card.name}").then (resp) ->
+      console.debug "getting fresh"
+      App.getJSON("#{wsUrl}/games/#{id}/play_card/#{card.name}").then (resp) ->
+        console.debug "got resp"
         getRootModel(game).setFromRaw(resp)
+        console.debug "done"
 
     endTurn: ->
       game = @get("game")
@@ -276,14 +328,42 @@ window.setupApp = ->
       card = {card_id: "null"} unless card
       game = @get("game")
       id = game.get("id")
-      $.getJSON("#{wsUrl}/games/#{id}/choose_option/#{choice.choice_id}/#{card.card_id}").then (resp) ->
+      App.getJSON("#{wsUrl}/games/#{id}/choose_option/#{choice.choice_id}/#{card.card_id}").then (resp) ->
         getRootModel(game).setFromRaw(resp)
+
+    chooseCard: (card) ->
+      choice = @get('choices')[0]
+      @chooseOption choice, card
 
     invokeAbility: (card) ->
       game = @get("game")
       id = game.get("id")
       $.getJSON("#{wsUrl}/games/#{id}/invoke_ability/#{card.card_id}").then (resp) ->
         getRootModel(game).setFromRaw(resp)
+
+    choosableCardHash: (->
+      res = {}
+      if @get("choices")
+        for choice in @get("choices")
+          for card in choice.choosable_cards
+            res[card.card_id] = true
+      res).property("choices.@each.choosable_cards.@each")
+
+    handCards: (->
+      choosableCardHash = @get("choosableCardHash")
+  
+      _.map @get("hand.cards"), (card) ->
+        if choosableCardHash[card.card_id]
+          Ember.set card, "choosable", true
+        card).property("hand.cards.@each","choosableCardHash")
+
+    playedCards: (->
+      choosableCardHash = @get("choosableCardHash")
+    
+      _.map @get("played.cards"), (card) ->
+        if choosableCardHash[card.card_id]
+          Ember.set card, "choosable", true
+        card).property("played.cards.@each","choosableCardHash")
 
   App.OtherSideController = App.SideController.extend()
 
@@ -295,10 +375,34 @@ window.setupApp = ->
       @get('controllers.game.isCurrent')).property('controllers.game.isCurrent')
 
   App.DiscardController = Em.ObjectController.extend
-    shouldDisplay: false
+    needs: "side"
+    shouldDisplay: (-> App.get("defaultDiscardDisplay")).property()
     toggleDisplay: ->
+      console.debug "toggle display"
       val = !@get('shouldDisplay')
       @set "shouldDisplay",val
+
+    fixedCards: (->
+      choosableCardHash = @get("controllers.side.choosableCardHash")
+
+      _.map @get("cards"), (card) ->
+        if choosableCardHash[card.card_id]
+          Ember.set card, "choosable", true
+        card).property("cards.@each","controllers.side.choosableCardHash")
+
+  App.TrophiesController = Em.ObjectController.extend
+    needs: "side"
+    shouldDisplay: (-> App.get("defaultDiscardDisplay")).property()
+    toggleDisplay: ->
+      console.debug "toggle display"
+      val = !@get('shouldDisplay')
+      @set "shouldDisplay",val
+
+    playCard: (card) ->
+      game = @get("controllers.side.game")
+      id = @get("controllers.side.game.id")
+      App.getJSON("#{wsUrl}/games/#{id}/play_trophy/#{card.card_id}").then (resp) ->
+        getRootModel(game).setFromRaw(resp)
 
   App.ConstructsController = Em.ObjectController.extend
     shouldDisplay: false
@@ -308,6 +412,40 @@ window.setupApp = ->
 
   App.CenterController = Em.ObjectController.extend
     isCurrent: true
+
+  App.Cards = Em.Object.extend
+    cards: (->
+      res = {}
+      App.getJSON("#{wsUrl}/cards").then (data) ->
+        for card in data.cards
+          res[card.name] = card
+      res).property()
+
+    getCard: (name) ->
+      @get('cards')[name]
+
+    gamePlaces: (->
+      console.debug "getting gamePlaces"
+      res = Em.ArrayController.create(content: ["constant_cards"])
+      App.getJSON("#{wsUrl}/cards").then (data) ->
+        res.pushObjects(data.places.game)
+      res).property()
+
+    sidePlaces: (->
+      res = Em.ArrayController.create(content: [])
+      App.getJSON("#{wsUrl}/cards").then (data) ->
+        res.pushObjects(data.places.side)
+      res).property()
+
+    all: (-> 
+      @get('cards')
+      @get('gamePlaces')
+      @get('sidePlaces')).property("cards","gamePlaces","sidePlaces")
+
+  c = App.Cards.create()
+  c.get('all')
+  App.set "cards",c
+
 
   Ember.Handlebars.registerBoundHelper "displayCard", (card,options) ->
     if card.image_url != 'none'

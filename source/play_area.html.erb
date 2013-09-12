@@ -4,10 +4,12 @@
       {{partial "actions"}}
       {{render constructs constructs}}
       {{render discard discard}}
+      {{render trophies trophies}}
     </div>
 
     <div class="span9">
       {{partial "played"}}
+      <hr><br>
       {{partial "hand"}}
     </div>
   </div>
@@ -142,33 +144,71 @@
 
 
 <script type="text/x-handlebars" data-template-name="_hand">
-  <div class="hand">
-    {{#each card in hand.cards}}
-      {{#if isCurrent}}
-        <a href="#" {{action "playCard" card}}>{{displayCard card}}</a>
-      {{else}}
-        {{displayCard card}}
-      {{/if}}
+  <div class="hand row">
+    {{#each card in handCards}}
+      <div {{bindAttr class="card.choosable :hand-card :span2"}}>
+        {{#if isCurrent}}
+          {{#if card.choosable}}
+            <a href="#" {{action "chooseCard" card}}>{{displayCard card}}</a>
+          {{else}}
+            <a href="#" {{action "playCard" card}}>{{displayCard card}}</a>
+          {{/if}}
+        {{else}}
+          {{displayCard card}}
+        {{/if}}
+      </div>
     {{/each}}
   </div>
 </script>
 
 <script type="text/x-handlebars" data-template-name="_played">
-  <div class="played">
-    {{#each card in played.cards}}
-      {{displayCard card}}
+  <div class="played row">
+    {{#each card in playedCards}}
+      <div {{bindAttr class="card.choosable :played-card :span2"}}>
+        {{#if isCurrent}}
+          {{#if card.choosable}}
+            <a href="#" {{action "chooseCard" card}}>{{displayCard card}}</a>
+          {{else}}
+            {{displayCard card}}
+          {{/if}}
+        {{else}}
+          {{displayCard card}}
+        {{/if}}
+      </div>
     {{/each}}
   </div>
 </script>
 
 <script type="text/x-handlebars" data-template-name="discard">
-  <div>
-    <a href="#" {{action toggleDisplay}}>
+  <div class="discard">
+    <a class="togglex" href="#" {{action toggleDisplay}}>
       <h4>Discard ({{cards.length}})</h4>
     </a>
     {{#if shouldDisplay}}
+      {{#each card in fixedCards}}
+        <div class="card">
+          {{#if card.choosable}}
+            <a href="#" {{action "chooseCard" card}}>{{card.name}}</a>
+          {{else}}
+            {{card.name}}
+          {{/if}}
+        </div>
+        <br>
+      {{/each}}
+    {{/if}}
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="trophies">
+  <div class="trophies">
+    <a class="toggle" href="#" {{action toggleDisplay}}>
+      <h4>Trophies ({{cards.length}})</h4>
+    </a>
+    {{#if shouldDisplay}}
       {{#each card in cards}}
-        {{card.name}}
+        <div class="card">
+          <a href="#" {{action "playCard" card}}>{{card.name}}</a>
+        </div>
         <br>
       {{/each}}
     {{/if}}

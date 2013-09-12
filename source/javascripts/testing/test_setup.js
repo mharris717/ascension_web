@@ -70,6 +70,20 @@ function testHelper() {
     beforeEach(function() {
       b
       c
+
+      if (a && _.isFunction(a)) {
+        a = a()
+      }
+
+      if (b && _.isFunction(b)) {
+        b = b()
+      }
+
+      if (c && _.isFunction(c)) {
+        c = c()
+      }
+
+
       res.transitionTo(a,b,c)
     })
   }

@@ -38,12 +38,16 @@
 
 <script type="text/x-handlebars" data-template-name="card">
   <div {{bindAttr class=":span2"}}>
-    <div {{bindAttr class="engageable :center-card"}}>
+    <div {{bindAttr class="engageable choosable :center-card"}}>
       {{#if isCurrent}}
-        {{#if card.engageable}}
-          <a href="#" {{action "acquireCard" card}}>{{displayCard card}}</a>
+        {{#if card.choosable}}
+          <a href="#" {{action "chooseCard" card}}>{{displayCard card}}</a>
         {{else}}
-          {{displayCard card}}
+          {{#if card.engageable}}
+            <a href="#" {{action "acquireCard" card}}>{{displayCard card}}</a>
+          {{else}}
+            {{displayCard card}}
+          {{/if}}
         {{/if}}
       {{else}}
         {{displayCard card}}

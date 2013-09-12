@@ -1,15 +1,12 @@
 setupTestingSpecific = ->
   App.Game.reopenClass
     find: ->
-      #console.debug "in testing find"
       res = Em.ArrayController.create(content: [])
 
-      game = App.Game.create(getGameJson())
-      res.pushObject game
+      for raw in App.get('rawGames')
+        game = App.Game.create(raw)
+        res.pushObject(game)
 
-      game = App.Game.create(gameJsonWithChoice())
-      res.pushObject game
-      #console.debug "size #{res.get('length')}"
       res
 
 
@@ -18,6 +15,8 @@ setupTestingSpecific = ->
     window.lastJsonCall = arguments[0]
     console.debug "json call"
     {then: ->}
+
+  App.set("defaultDiscardDisplay",true)
 
 window.setupTesting = ->
   res = setupTestingGeneric()

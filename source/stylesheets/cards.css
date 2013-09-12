@@ -13,6 +13,21 @@
   margin: 0px;
 }
 
+.hand-card {
+  border-style: solid;
+  border-color: White;
+  border-width: 7px;
+  margin: 0px;
+  width: 121px;
+}
+
+.choosable {
+  border-style: solid;
+  border-color: Red;
+  border-width: 7px;
+  margin: 0px;
+}
+
 #center {
   margin-left: 40px;
 }
